@@ -535,11 +535,10 @@ Room Number</textarea
 
             room.students.forEach((student) => {
               doc.setFontSize(10);
-              doc.text(`Student: ${student.studentName}`, 10, y);
+              doc.text(student.studentName, 10, y);
               let x = 80;
               student.choices.forEach((choice) => {
-                doc.text(`${choice.name}: ${choice.quantity}`, x, y);
-                // y += 5;
+                doc.text(`${choice.quantity} of the ${choice.name}`, x, y);
                 x += 50;
               });
               y += 5;
