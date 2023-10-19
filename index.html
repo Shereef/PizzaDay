@@ -279,7 +279,7 @@ Room Number</textarea
               return studentA.localeCompare(studentB);
             });
             console.log("Merged Data Sorted:", mergedData);
-            const outputModel = [];
+            const locations = [];
 
             mergedData.forEach((row) => {
               const [
@@ -292,7 +292,7 @@ Room Number</textarea
               ] = row;
 
               // Find the corresponding location, room, and student in the outputModel
-              let locationObj = outputModel.find(
+              let locationObj = locations.find(
                 (item) => item.locationName === location
               );
               if (!locationObj) {
@@ -302,7 +302,7 @@ Room Number</textarea
                   rooms: [],
                   choices: [],
                 };
-                outputModel.push(locationObj);
+                locations.push(locationObj);
               }
 
               let room = locationObj.rooms.find(
@@ -361,8 +361,9 @@ Room Number</textarea
               studentChoice.quantity += quantity;
             });
 
-            console.log(outputModel);
-            exportToPDF(outputModel);
+            console.log(locations);
+            exportToPDF(locations);
+            exportToExcel(locations);
           };
           csvReader.readAsText(csvFile);
         };
@@ -584,6 +585,122 @@ Room Number</textarea
             .replace(/[^a-z0-9]/gi, "_")
             .toLowerCase()}.pdf`
         );
+      }
+      // Function to export merged data to a new Excel file
+      function exportToExcel(locations) {
+        const printDate = new Date().toISOString();
+        const XLSX = window.XLSX;
+        const workbook = XLSX.utils.book_new();
+        const locationSummaryData = [];
+        locationSummaryData.push(["Pizza Day Report"]);
+        locationSummaryData.push([""]);
+        locationSummaryData.push([""]);
+        locationSummaryData.push([`Printed on`, "", "", `${printDate}`]);
+        locationSummaryData.push([""]);
+        locationSummaryData.push([""]);
+        locationSummaryData.push(["Location Summary"]);
+        locationSummaryData.push([""]);
+        locationSummaryData.push([""]);
+        locationSummaryData.push([""]);
+        locationSummaryData.push([""]);
+
+        locations.forEach((location) => {
+          const locName =
+            location.locationName ?? "Unknown Location (Please see room name)";
+          locationSummaryData.push(["Location Name", "", "", locName]);
+          locationSummaryData.push([
+            `Total Quantity`,
+            "",
+            "",
+            location.quantity,
+          ]);
+          location.choices.forEach((choice) => {
+            locationSummaryData.push([choice.name, "", "", choice.quantity]);
+          });
+          locationSummaryData.push([""]);
+          locationSummaryData.push([""]);
+        });
+
+        const locationSummaryWorksheet =
+          XLSX.utils.aoa_to_sheet(locationSummaryData);
+        XLSX.utils.book_append_sheet(
+          workbook,
+          locationSummaryWorksheet,
+          "LocationSummary"
+        );
+        for (const cellAddress in locationSummaryWorksheet) {
+          if (
+            locationSummaryWorksheet[cellAddress] &&
+            locationSummaryWorksheet[cellAddress].v === "Pizza Day Report"
+          ) {
+            locationSummaryWorksheet[cellAddress].s = { font: { sz: 20 } };
+          }
+        }
+        locations.forEach((location) => {
+          const locName =
+            location.locationName ?? "Unknown Location (Please see room name)";
+          location.rooms.forEach((room) => {
+            const roomData = [];
+            roomData.push(["Pizza Day Report"]);
+            roomData.push([`Printed on`, "", "", `${printDate}`]);
+            roomData.push([""]);
+            roomData.push(["Room Data:"]);
+            roomData.push([""]);
+            roomData.push([`Homeroom`, "", "", `${room.roomName}`]);
+            roomData.push([`Room Number`, "", "", `${room.roomNumber}`]);
+            roomData.push([`Room location`, "", "", `${locName}`]);
+            roomData.push([`Total Quantity`, "", "", `${room.quantity}`]);
+            room.choices.forEach((choice) => {
+              roomData.push([`${choice.name}`, "", "", `${choice.quantity}`]);
+            });
+            roomData.push([""]);
+            roomData.push([""]);
+            roomData.push(["Students:"]);
+
+            room.students.forEach((student) => {
+              const studentData = [student.studentName, "", ""];
+              student.choices.forEach((choice) => {
+                studentData.push(`${choice.quantity} of the ${choice.name}`);
+                studentData.push("");
+                studentData.push("");
+              });
+              roomData.push(studentData);
+            });
+            const roomWorksheet = XLSX.utils.aoa_to_sheet(roomData);
+            XLSX.utils.book_append_sheet(
+              workbook,
+              roomWorksheet,
+              room.roomName
+            );
+          });
+        });
+
+        // Create the Location Summary sheet
+
+        // Generate a data URL for the workbook
+        const excelData = XLSX.write(workbook, {
+          bookType: "xlsx",
+          type: "binary",
+        });
+        const blob = new Blob([s2ab(excelData)], {
+          type: "application/octet-stream",
+        });
+        function s2ab(s) {
+          const buf = new ArrayBuffer(s.length);
+          const view = new Uint8Array(buf);
+          for (let i = 0; i < s.length; i++) view[i] = s.charCodeAt(i) & 0xff;
+          return buf;
+        }
+        // Create a link to download the Excel file
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.textContent = "Download Excel File";
+        document.body.appendChild(a);
+
+        a.download = `SSS_PizzaDay_${printDate
+          .replace(/[^a-z0-9]/gi, "_")
+          .toLowerCase()}.xlsx`;
+        a.click();
       }
     </script>
 
