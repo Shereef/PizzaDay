@@ -61,6 +61,7 @@ Room Number</textarea
       const excelChoiceNameIndex = 0;
       const excelHomeRoomIndex = 1;
       const excelQuantityIndex = 2;
+      const excelStudentNameIndex = 3;
 
       const csvHomeRoomIndex = 0;
       const csvLocationIndex = 1;
@@ -84,6 +85,10 @@ Room Number</textarea
       }
       function process() {
         const columnsToKeep = getColumnsToKeep();
+        if (!columnsToKeep || columnsToKeep.length < 4) {
+          alert("The excel Columns must be more than 3!");
+          return;
+        }
         const columnToFind = columnsToKeep[excelChoiceNameIndex];
 
         const excelFileInput = document.getElementById("excelFileInput");
@@ -215,6 +220,10 @@ Room Number</textarea
       function mergeData(excelData, csvData) {
         const columnsToKeep = getColumnsToKeep();
         const csvColumns = getCSVColumns();
+        if (!csvColumns || csvColumns.length < 3) {
+          alert("The CSV Columns must be more than 2!");
+          return;
+        }
 
         const excelHomeRoomNameIndex = excelData[0].indexOf(
           columnsToKeep[excelHomeRoomIndex]
