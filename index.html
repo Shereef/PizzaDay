@@ -464,7 +464,7 @@ Room Number</textarea
 
           let strMatchedValue;
           if (arrMatches[2]) {
-            strMatchedValue = arrMatches[2].replace(new RegExp('""', "g"), '"');
+            strMatchedValue = arrMatches[2].replace(/""/g, '"');
           } else {
             strMatchedValue = arrMatches[3];
           }
