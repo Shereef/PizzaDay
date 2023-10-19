@@ -16,11 +16,12 @@
         const file = fileInput.files[0];
         const columnToFind = "Student Name"; // Adjust this to the desired column to find
         const columnsToKeep = [
+          "Choice Name",
           "Homeroom",
           "Student Name",
           "Quantity",
-          "Choice Name",
         ];
+        const choiceNameIndex = columnsToKeep.indexOf("Choice Name");
 
         if (!file) {
           alert("Please select a file.");
@@ -91,10 +92,17 @@
           const header = sheetData[rowIndex];
 
           // Filter out unwanted columns while keeping the desired ones
-          const filteredData = sheetData.slice(rowsToSkip).map((row) => {
-            return columnsToKeep.map((col) => row[header.indexOf(col)]);
-          });
-
+          const filteredData = sheetData
+            .slice(rowsToSkip)
+            .filter((row) => {
+              return row.length && row.some((cell) => cell);
+            })
+            .map((row) => {
+              return columnsToKeep.map((col) => row[header.indexOf(col)]);
+            })
+            .filter((row) => {
+              return row.length && row.some((cell) => cell);
+            });
           // Sort the data by 'Homeroom' (assuming 'Homeroom' is a string)
           filteredData.sort((a, b) => {
             const homeroomIndex = columnsToKeep.indexOf("Homeroom");
