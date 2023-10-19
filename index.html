@@ -92,7 +92,7 @@
           const header = sheetData[rowIndex];
 
           // Filter out unwanted columns while keeping the desired ones
-          const filteredData = sheetData
+          let filteredData = sheetData
             .slice(rowsToSkip)
             .filter((row) => {
               return row.length && row.some((cell) => cell);
@@ -103,6 +103,18 @@
             .filter((row) => {
               return row.length && row.some((cell) => cell);
             });
+          let choice;
+          for (const row of filteredData) {
+            const rowChoice = row[choiceNameIndex];
+            if (rowChoice) {
+              choice = rowChoice;
+            } else {
+              row[choiceNameIndex] = choice;
+            }
+          }
+          filteredData = filteredData.filter((row) => {
+            return row.every((cell) => cell);
+          });
           // Sort the data by 'Homeroom' (assuming 'Homeroom' is a string)
           filteredData.sort((a, b) => {
             const homeroomIndex = columnsToKeep.indexOf("Homeroom");
