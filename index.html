@@ -7,24 +7,60 @@
   </head>
   <body>
     <h1>Excel Processor</h1>
-    <input type="file" id="fileInput" accept=".xlsx" />
+    <label>Select the school cash export:</label>
+    <br />
+    <input type="file" id="excelFileInput" accept=".xlsx" />
+    <br />
+    <label>List of Homeroom & Room Numbers.csv:</label>
+    <br />
+    <input type="file" id="csvFileInput" accept=".csv" />
+    <br />
+    <br />
     <button onclick="processExcel()">Process Excel</button>
+    <br />
+    <br />
+    <label>Excel Columns:</label>
+    <br />
+    <textarea id="excelColumns" style="height: 100px">
+Choice Name
+Homeroom
+Quantity
+Student Name</textarea
+    >
+    <br />
+    <span>Choice name and home room must be the first 2 always</span> <br />
+
+    <br />
+    <br />
+    <label>CSV Columns:</label>
+    <br />
+    <textarea id="csvColumns" style="height: 100px">
+Home Room Name
+Location
+Room Number</textarea
+    >
+    <br />
+    <span>Home room name must be the first column</span> <br />
+
+    <br />
+    <br />
 
     <script>
+      const excelChoiceNameIndex = 0;
+      const excelHomeRoomIndex = 1;
+      const csvHomeRoomIndex = 0;
       function processExcel() {
-        const fileInput = document.getElementById("fileInput");
-        const file = fileInput.files[0];
-        const columnToFind = "Student Name"; // Adjust this to the desired column to find
-        const columnsToKeep = [
-          "Choice Name",
-          "Homeroom",
-          "Student Name",
-          "Quantity",
-        ];
-        const choiceNameIndex = columnsToKeep.indexOf("Choice Name");
+        const columnsToKeep = document
+          .getElementById("excelColumns")
+          .value.split("\n");
+        const columnToFind = columnsToKeep[excelChoiceNameIndex];
 
-        if (!file) {
-          alert("Please select a file.");
+        const excelFileInput = document.getElementById("excelFileInput");
+        const excelFile = excelFileInput.files[0];
+        const csvFileInput = document.getElementById("csvFileInput");
+        const csvFile = csvFileInput.files[0];
+        if (!excelFile || !csvFile) {
+          alert("Please select both Excel and CSV files.");
           return;
         }
 
@@ -105,11 +141,11 @@
             });
           let choice;
           for (const row of filteredData) {
-            const rowChoice = row[choiceNameIndex];
+            const rowChoice = row[excelChoiceNameIndex];
             if (rowChoice) {
               choice = rowChoice;
             } else {
-              row[choiceNameIndex] = choice;
+              row[excelChoiceNameIndex] = choice;
             }
           }
           filteredData = filteredData.filter((row) => {
@@ -117,52 +153,150 @@
           });
           // Sort the data by 'Homeroom' (assuming 'Homeroom' is a string)
           filteredData.sort((a, b) => {
-            const homeroomIndex = columnsToKeep.indexOf("Homeroom");
-            const homeroomA = a[homeroomIndex] || "";
-            const homeroomB = b[homeroomIndex] || "";
+            const homeroomA = a[excelHomeRoomIndex] || "";
+            const homeroomB = b[excelHomeRoomIndex] || "";
             return homeroomA.localeCompare(homeroomB);
           });
-
           console.log("Header:", columnsToKeep);
           console.log("Filtered Data (sorted by Homeroom):", filteredData);
 
-          // Create a new workbook and add a worksheet with the filtered and sorted data
-          const newWorkbook = XLSX.utils.book_new();
-          const newWorksheet = XLSX.utils.aoa_to_sheet([
-            columnsToKeep,
-            ...filteredData,
-          ]);
-          XLSX.utils.book_append_sheet(
-            newWorkbook,
-            newWorksheet,
-            selectedSheet
-          );
+          filteredData.unshift(columnsToKeep);
 
-          // Write the workbook to a binary string and create a Blob
-          const outputData = XLSX.write(newWorkbook, {
-            bookType: "xlsx",
-            type: "binary",
-          });
-          const blob = new Blob([s2ab(outputData)], {
-            type: "application/octet-stream",
-          });
+          // Read and process the CSV file
+          const csvReader = new FileReader();
+          csvReader.onload = function (csvEvent) {
+            const csvText = csvEvent.target.result;
+            const csvData = CSVToArray(csvText);
 
-          // Function to convert string to ArrayBuffer
-          function s2ab(s) {
-            const buf = new ArrayBuffer(s.length);
-            const view = new Uint8Array(buf);
-            for (let i = 0; i < s.length; i++) view[i] = s.charCodeAt(i) & 0xff;
-            return buf;
-          }
+            // Merge data based on 'Home Room Name'
+            const mergedData = mergeData(filteredData, csvData);
 
-          // Create a download link and trigger a click event to prompt for download
-          const link = document.createElement("a");
-          link.href = URL.createObjectURL(blob);
-          link.download = "filtered_data.xlsx";
-          link.click();
+            // Export the merged data to a new Excel file
+            exportMergedData(mergedData);
+          };
+          csvReader.readAsText(csvFile);
         };
 
-        reader.readAsArrayBuffer(file);
+        reader.readAsArrayBuffer(excelFile);
+      }
+
+      // Function to merge data based on 'Home Room Name'
+      function mergeData(excelData, csvData) {
+        const columnsToKeep = document
+          .getElementById("excelColumns")
+          .value.split("\n");
+        const csvColumns = document
+          .getElementById("csvColumns")
+          .value.split("\n");
+
+        const excelHomeRoomNameIndex = excelData[0].indexOf(
+          columnsToKeep[excelHomeRoomIndex]
+        );
+        const csvHomeRoomNameIndex = csvData[0].indexOf(
+          csvColumns[csvHomeRoomIndex]
+        );
+
+        if (excelHomeRoomNameIndex === -1 || csvHomeRoomNameIndex === -1) {
+          alert("Home Room not found in Excel or CSV data.");
+          return;
+        }
+        const csvHeader = csvData[0];
+        const csvHeaderWithoutHomeRoomName = csvHeader.filter(
+          (col) => col !== csvHeader[csvHomeRoomNameIndex]
+        );
+        const mergedData = excelData.map((row, index) => {
+          if (index === 0) {
+            return [...row, ...csvHeaderWithoutHomeRoomName];
+          } else {
+            const csvHomeRoomName = row[excelHomeRoomNameIndex];
+            const matchingCsvRow = csvData.find(
+              (csvRow) => csvRow[csvHomeRoomNameIndex] === csvHomeRoomName
+            );
+            if (matchingCsvRow) {
+              const resultRow = [
+                ...row,
+                ...matchingCsvRow.filter(
+                  (col) => matchingCsvRow.indexOf(col) !== csvHomeRoomNameIndex
+                ),
+              ];
+              return resultRow;
+            } else {
+              return row;
+            }
+          }
+        });
+
+        return mergedData;
+      }
+
+      // Function to export merged data to a new Excel file
+      function exportMergedData(mergedData) {
+        const newWorkbook = XLSX.utils.book_new();
+        const newWorksheet = XLSX.utils.aoa_to_sheet(mergedData);
+        XLSX.utils.book_append_sheet(newWorkbook, newWorksheet, "MergedData");
+
+        // Write the workbook to a binary string and create a Blob
+        const outputData = XLSX.write(newWorkbook, {
+          bookType: "xlsx",
+          type: "binary",
+        });
+        const blob = new Blob([s2ab(outputData)], {
+          type: "application/octet-stream",
+        });
+
+        // Function to convert string to ArrayBuffer
+        function s2ab(s) {
+          const buf = new ArrayBuffer(s.length);
+          const view = new Uint8Array(buf);
+          for (let i = 0; i < s.length; i++) view[i] = s.charCodeAt(i) & 0xff;
+          return buf;
+        }
+
+        // Create a download link and trigger a click event to prompt for download
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = "merged_data.xlsx";
+        link.click();
+      }
+
+      // Custom function to parse CSV data
+      function CSVToArray(strData, strDelimiter) {
+        strDelimiter = strDelimiter || ",";
+
+        const objPattern = new RegExp(
+          "(\\" +
+            strDelimiter +
+            "|\\r?\\n|\\r|^)" +
+            '(?:"([^"]*(?:""[^"]*)*)"|' +
+            '([^"\\' +
+            strDelimiter +
+            "\\r\\n]*))",
+          "gi"
+        );
+
+        const arrData = [[]];
+        let arrMatches = null;
+
+        while ((arrMatches = objPattern.exec(strData))) {
+          const strMatchedDelimiter = arrMatches[1];
+
+          if (
+            strMatchedDelimiter.length &&
+            strMatchedDelimiter !== strDelimiter
+          ) {
+            arrData.push([]);
+          }
+
+          let strMatchedValue;
+          if (arrMatches[2]) {
+            strMatchedValue = arrMatches[2].replace(new RegExp('""', "g"), '"');
+          } else {
+            strMatchedValue = arrMatches[3];
+          }
+          arrData[arrData.length - 1].push(strMatchedValue);
+        }
+
+        return arrData;
       }
     </script>
 
