@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Excel Processor</title>
+  </head>
+  <body>
+    <h1>Excel Processor</h1>
+    <input type="file" id="fileInput" accept=".xlsx" />
+    <button onclick="processExcel()">Process Excel</button>
+
+    <script>
+      function processExcel() {
+        const fileInput = document.getElementById("fileInput");
+        const file = fileInput.files[0];
+        const columnToFind = "Student Name"; // Adjust this to the desired column to find
+        const columnsToKeep = [
+          "Homeroom",
+          "Student Name",
+          "Quantity",
+          "Choice Name",
+        ];
+
+        if (!file) {
+          alert("Please select a file.");
+          return;
+        }
+
+        const reader = new FileReader();
+
+        reader.onload = function (e) {
+          const arrayBuffer = e.target.result;
+
+          let workbook;
+          try {
+            workbook = XLSX.read(arrayBuffer, { type: "array" });
+          } catch (error) {
+            alert(
+              "An error occurred while processing the file:",
+              error.message
+            );
+            return;
+          }
+
+          const sheetNames = workbook.SheetNames;
+          const selectedSheet = prompt(
+            "Select a sheet:\n" + sheetNames.join("\n")
+          );
+
+          if (!selectedSheet || !sheetNames.includes(selectedSheet)) {
+            alert("Invalid or no sheet selected.");
+            return;
+          }
+
+          const worksheet = workbook.Sheets[selectedSheet];
+
+          // Convert the worksheet data to an array of arrays
+          const sheetData = XLSX.utils.sheet_to_json(worksheet, {
+            header: 1,
+            range: 0, // Start from the beginning of the sheet
+          });
+
+          // Find the index of the row with the specified value in the desired column
+          const rowIndex = sheetData.findIndex((row) =>
+            row.includes(columnToFind)
+          );
+
+          if (rowIndex === -1) {
+            alert("The specified column value was not found.");
+            return;
+          }
+
+          // The number of rows to skip is the row index where the value was found
+          const rowsToSkip = rowIndex + 1; // Add 1 to account for the header row
+
+          console.log("Rows to skip:", rowsToSkip);
+
+          // The header is the row where the value was found
+          const header = sheetData[rowIndex];
+
+          // Filter out unwanted columns while keeping the desired ones
+          const filteredData = sheetData.slice(rowsToSkip).map((row) => {
+            return columnsToKeep.map((col) => row[header.indexOf(col)]);
+          });
+
+          // Sort the data by 'Homeroom' (assuming 'Homeroom' is a string)
+          filteredData.sort((a, b) => {
+            const homeroomIndex = columnsToKeep.indexOf("Homeroom");
+            const homeroomA = a[homeroomIndex] || "";
+            const homeroomB = b[homeroomIndex] || "";
+            return homeroomA.localeCompare(homeroomB);
+          });
+
+          console.log("Header:", columnsToKeep);
+          console.log("Filtered Data (sorted by Homeroom):", filteredData);
+
+          // Create a new workbook and add a worksheet with the filtered and sorted data
+          const newWorkbook = XLSX.utils.book_new();
+          const newWorksheet = XLSX.utils.aoa_to_sheet([
+            columnsToKeep,
+            ...filteredData,
+          ]);
+          XLSX.utils.book_append_sheet(
+            newWorkbook,
+            newWorksheet,
+            selectedSheet
+          );
+
+          // Write the workbook to a binary string and create a Blob
+          const outputData = XLSX.write(newWorkbook, {
+            bookType: "xlsx",
+            type: "binary",
+          });
+          const blob = new Blob([s2ab(outputData)], {
+            type: "application/octet-stream",
+          });
+
+          // Function to convert string to ArrayBuffer
+          function s2ab(s) {
+            const buf = new ArrayBuffer(s.length);
+            const view = new Uint8Array(buf);
+            for (let i = 0; i < s.length; i++) view[i] = s.charCodeAt(i) & 0xff;
+            return buf;
+          }
+
+          // Create a download link and trigger a click event to prompt for download
+          const link = document.createElement("a");
+          link.href = URL.createObjectURL(blob);
+          link.download = "filtered_data.xlsx";
+          link.click();
+        };
+
+        reader.readAsArrayBuffer(file);
+      }
+    </script>
+
+    <!-- Include xlsx library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.16.9/xlsx.full.min.js"></script>
+  </body>
+</html>
