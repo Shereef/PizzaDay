@@ -150,27 +150,30 @@ Room Number</textarea
           }
 
           const sheetNames = workbook.SheetNames;
+          let selectedSheet;
+          if (sheetNames.length > 1) {
+            // Prompt the user to select a sheet by number
+            let promptMessage = "Select a sheet by number:\n";
+            sheetNames.forEach((sheetName, index) => {
+              promptMessage += `${index + 1}. ${sheetName}\n`;
+            });
 
-          // Prompt the user to select a sheet by number
-          let promptMessage = "Select a sheet by number:\n";
-          sheetNames.forEach((sheetName, index) => {
-            promptMessage += `${index + 1}. ${sheetName}\n`;
-          });
+            const selectedSheetIndex = parseInt(prompt(promptMessage, 2));
 
-          const selectedSheetIndex = parseInt(prompt(promptMessage, 2));
+            if (
+              isNaN(selectedSheetIndex) ||
+              selectedSheetIndex < 1 ||
+              selectedSheetIndex > sheetNames.length
+            ) {
+              console.error("Invalid sheet number selected.");
+              alert("Invalid sheet number selected.");
+              return;
+            }
 
-          if (
-            isNaN(selectedSheetIndex) ||
-            selectedSheetIndex < 1 ||
-            selectedSheetIndex > sheetNames.length
-          ) {
-            console.error("Invalid sheet number selected.");
-            alert("Invalid sheet number selected.");
-            return;
+            selectedSheet = sheetNames[selectedSheetIndex - 1]; // Adjust for 0-based index
+          } else {
+            selectedSheet = sheetNames[0];
           }
-
-          const selectedSheet = sheetNames[selectedSheetIndex - 1]; // Adjust for 0-based index
-
           const worksheet = workbook.Sheets[selectedSheet];
 
           // Convert the worksheet data to an array of arrays
