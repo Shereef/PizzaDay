@@ -28,7 +28,13 @@ Quantity
 Student Name</textarea
     >
     <br />
-    <span>Choice name and home room must be the first 2 always</span> <br />
+    <span
+      >Choice name must be first<br />Home room must be second<br />Quantity
+      must be third<br />Student Name must be fourth<br />
+      This is used to set the column names if they ever change<br />You
+      shouldn't need to change this</span
+    >
+    <br />
 
     <br />
     <br />
@@ -40,7 +46,13 @@ Location
 Room Number</textarea
     >
     <br />
-    <span>Home room name must be the first column</span> <br />
+    <span
+      >Home room name must be the first column<br />Location must be the second
+      column<br />Room Number must be the third column This is used to set the
+      column names if they ever change<br />You shouldn't need to change
+      this</span
+    >
+    <br />
 
     <br />
     <br />
@@ -48,12 +60,30 @@ Room Number</textarea
     <script>
       const excelChoiceNameIndex = 0;
       const excelHomeRoomIndex = 1;
-      const csvHomeRoomIndex = 0;
+      const excelQuantityIndex = 2;
 
-      function process() {
+      const csvHomeRoomIndex = 0;
+      const csvLocationIndex = 1;
+      const csvRoomNumberIndex = 2;
+      function getColumnsToKeep() {
         const columnsToKeep = document
           .getElementById("excelColumns")
-          .value.split("\n");
+          .value.trim()
+          .split("\n")
+          .filter((element) => element?.trim().length);
+
+        return columnsToKeep;
+      }
+      function getCSVColumns() {
+        const csvColumns = document
+          .getElementById("csvColumns")
+          .value.trim()
+          .split("\n")
+          .filter((element) => element?.trim().length);
+        return csvColumns;
+      }
+      function process() {
+        const columnsToKeep = getColumnsToKeep();
         const columnToFind = columnsToKeep[excelChoiceNameIndex];
 
         const excelFileInput = document.getElementById("excelFileInput");
@@ -183,12 +213,8 @@ Room Number</textarea
 
       // Function to merge data based on 'Home Room Name'
       function mergeData(excelData, csvData) {
-        const columnsToKeep = document
-          .getElementById("excelColumns")
-          .value.split("\n");
-        const csvColumns = document
-          .getElementById("csvColumns")
-          .value.split("\n");
+        const columnsToKeep = getColumnsToKeep();
+        const csvColumns = getCSVColumns();
 
         const excelHomeRoomNameIndex = excelData[0].indexOf(
           columnsToKeep[excelHomeRoomIndex]
