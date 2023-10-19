@@ -188,13 +188,8 @@ Room Number</textarea
             return row.every((cell) => cell);
           });
           // Sort the data by 'Homeroom' (assuming 'Homeroom' is a string)
-          filteredData.sort((a, b) => {
-            const homeroomA = a[excelHomeRoomIndex] || "";
-            const homeroomB = b[excelHomeRoomIndex] || "";
-            return homeroomA.localeCompare(homeroomB);
-          });
           console.log("Header:", columnsToKeep);
-          console.log("Filtered Data (sorted by Homeroom):", filteredData);
+          console.log("Filtered Data:", filteredData);
 
           filteredData.unshift(columnsToKeep);
 
@@ -206,9 +201,126 @@ Room Number</textarea
 
             // Merge data based on 'Home Room Name'
             const mergedData = mergeData(filteredData, csvData);
+            console.log("Merged Data:", mergedData);
+            mergedData.splice(0, 1);
+            console.log("Merged Data Spliced:", mergedData);
 
-            // Export the merged data to a new Excel file
-            exportMergedData(mergedData);
+            mergedData.sort((a, b) => {
+              const locationA = a[a.length - 2] || "";
+              const locationB = b[b.length - 2] || "";
+              const homeroomA = a[excelHomeRoomIndex] || "";
+              const homeroomB = b[excelHomeRoomIndex] || "";
+              const choiceA = a[excelChoiceNameIndex] || "";
+              const choiceB = b[excelChoiceNameIndex] || "";
+              const studentA = a[excelStudentNameIndex] || "";
+              const studentB = b[excelStudentNameIndex] || "";
+
+              // First, compare by location
+              const locationComparison = locationA.localeCompare(locationB);
+              if (locationComparison !== 0) {
+                return locationComparison;
+              }
+
+              // If the locations are the same, compare by homeroom
+              const homeroomComparison = homeroomA.localeCompare(homeroomB);
+              if (homeroomComparison !== 0) {
+                return homeroomComparison;
+              }
+
+              // If the homerooms are the same, compare by choice
+              const choiceComparison = choiceA.localeCompare(choiceB);
+              if (choiceComparison !== 0) {
+                return choiceComparison;
+              }
+
+              // If the choices are the same, compare by student
+              return studentA.localeCompare(studentB);
+            });
+            console.log("Merged Data Sorted:", mergedData);
+            const outputModel = [];
+
+            mergedData.forEach((row) => {
+              const [
+                choiceName,
+                homeroom,
+                quantity,
+                studentName,
+                location,
+                roomNumber,
+              ] = row;
+
+              // Find the corresponding location, room, and student in the outputModel
+              let locationObj = outputModel.find(
+                (item) => item.locationName === location
+              );
+              if (!locationObj) {
+                locationObj = {
+                  locationName: location,
+                  quantity: 0,
+                  rooms: [],
+                  choices: [],
+                };
+                outputModel.push(locationObj);
+              }
+
+              let room = locationObj.rooms.find(
+                (item) =>
+                  item.roomName === homeroom && item.roomNumber === roomNumber
+              );
+              if (!room) {
+                room = {
+                  roomName: homeroom,
+                  roomNumber,
+                  quantity: 0,
+                  choices: [],
+                  students: [],
+                };
+                locationObj.rooms.push(room);
+              }
+
+              let student = room.students.find(
+                (item) => item.studentName === studentName
+              );
+              if (!student) {
+                student = { studentName, quantity: 0, choices: [] };
+                room.students.push(student);
+              }
+
+              // Find the corresponding choice in the room and student
+              let roomChoice = room.choices.find(
+                (item) => item.name === choiceName
+              );
+              if (!roomChoice) {
+                roomChoice = { name: choiceName, quantity: 0 };
+                room.choices.push(roomChoice);
+              }
+              let locationChoice = locationObj.choices.find(
+                (item) => item.name === choiceName
+              );
+              if (!locationChoice) {
+                locationChoice = { name: choiceName, quantity: 0 };
+                locationObj.choices.push(locationChoice);
+              }
+
+              let studentChoice = student.choices.find(
+                (item) => item.name === choiceName
+              );
+              if (!studentChoice) {
+                studentChoice = { name: choiceName, quantity: 0 };
+                student.choices.push(studentChoice);
+              }
+
+              // Update the quantities
+              locationObj.quantity += quantity;
+              locationChoice.quantity += quantity;
+              room.quantity += quantity;
+              roomChoice.quantity += quantity;
+              student.quantity += quantity;
+              studentChoice.quantity += quantity;
+            });
+
+            console.log(outputModel);
+            exportToPDF(outputModel);
           };
           csvReader.readAsText(csvFile);
         };
@@ -244,9 +356,11 @@ Room Number</textarea
           if (index === 0) {
             return [...row, ...csvHeaderWithoutHomeRoomName];
           } else {
-            const csvHomeRoomName = row[excelHomeRoomNameIndex];
+            const excelRowHomeRoomName = row[excelHomeRoomNameIndex];
             const matchingCsvRow = csvData.find(
-              (csvRow) => csvRow[csvHomeRoomNameIndex] === csvHomeRoomName
+              (csvRow) =>
+                csvRow[csvHomeRoomNameIndex].indexOf(excelRowHomeRoomName) !==
+                -1
             );
             if (matchingCsvRow) {
               const resultRow = [
@@ -257,42 +371,21 @@ Room Number</textarea
               ];
               return resultRow;
             } else {
-              return row;
+              const errorMessage = `Home Room '${excelRowHomeRoomName}' found in Excel but not in the CSV data.`;
+              alert(errorMessage);
+              const loc = prompt(
+                `What is the location of '${excelRowHomeRoomName}'(Fort Sackville or Eaglewood)?`
+              );
+              const roomNum = prompt(
+                `What is the room number of '${excelRowHomeRoomName}'?`
+              );
+              csvData.push([excelRowHomeRoomName, loc, roomNum]);
+              return [...row, loc, roomNum];
             }
           }
         });
 
         return mergedData;
-      }
-
-      // Function to export merged data to a new Excel file
-      function exportMergedData(mergedData) {
-        const newWorkbook = XLSX.utils.book_new();
-        const newWorksheet = XLSX.utils.aoa_to_sheet(mergedData);
-        XLSX.utils.book_append_sheet(newWorkbook, newWorksheet, "MergedData");
-
-        // Write the workbook to a binary string and create a Blob
-        const outputData = XLSX.write(newWorkbook, {
-          bookType: "xlsx",
-          type: "binary",
-        });
-        const blob = new Blob([s2ab(outputData)], {
-          type: "application/octet-stream",
-        });
-
-        // Function to convert string to ArrayBuffer
-        function s2ab(s) {
-          const buf = new ArrayBuffer(s.length);
-          const view = new Uint8Array(buf);
-          for (let i = 0; i < s.length; i++) view[i] = s.charCodeAt(i) & 0xff;
-          return buf;
-        }
-
-        // Create a download link and trigger a click event to prompt for download
-        const link = document.createElement("a");
-        link.href = URL.createObjectURL(blob);
-        link.download = "merged_data.xlsx";
-        link.click();
       }
 
       // Custom function to parse CSV data
@@ -334,9 +427,125 @@ Room Number</textarea
 
         return arrData;
       }
+      function getTotalNumberOfRooms(locations) {
+        let totalRooms = 0;
+
+        locations.forEach((location) => {
+          location.rooms.forEach((room) => {
+            totalRooms++; // Increment the total count for each unique room
+          });
+        });
+
+        return totalRooms;
+      }
+      function exportToPDF(locations) {
+        const printDate = new Date().toISOString();
+        let y = 10;
+        const doc = new jsPDF();
+        const totalNumberOfPages = 1 + getTotalNumberOfRooms(locations);
+
+        // Add content to the PDF document
+        doc.setFontSize(18);
+        doc.text("Pizza Day Report", 105, y, { align: "center" });
+        y += 10;
+        doc.setFontSize(16);
+        doc.text(
+          `Page ${doc.internal.getNumberOfPages()} of ${totalNumberOfPages} - Printed on ${printDate}`,
+          10,
+          y,
+          {
+            align: "center",
+          }
+        );
+        y += 10;
+        doc.setFontSize(14);
+        doc.text("Location Data", 10, y, { align: "Left" });
+        y += 10;
+
+        locations.forEach((location) => {
+          const locName =
+            location.locationName ?? "Unknown Location (Please see room name)";
+          doc.setFontSize(12);
+          doc.text(`Location: ${locName}`, 10, y);
+          y += 10;
+          doc.setFontSize(10);
+          doc.text(`Total Quantity: ${location.quantity}`, 10, y);
+          y += 10;
+          location.choices.forEach((choice) => {
+            doc.setFontSize(10);
+            doc.text(`${choice.name}: ${choice.quantity}`, 20, y);
+            y += 10;
+          });
+          y += 10;
+        });
+
+        locations.forEach((location) => {
+          const locName =
+            location.locationName ?? "Unknown Location (Please see room name)";
+          location.rooms.forEach((room) => {
+            doc.addPage();
+            y = 10;
+
+            doc.setFontSize(18);
+            doc.text("Pizza Day Report", 105, y, { align: "center" });
+            y += 10;
+            doc.setFontSize(16);
+            doc.text(
+              `Page ${doc.internal.getNumberOfPages()} of ${totalNumberOfPages} - Printed on ${printDate}`,
+              10,
+              y,
+              {
+                align: "center",
+              }
+            );
+            y += 10;
+            doc.setFontSize(14);
+            doc.text("Room Data", 10, y, { align: "Left" });
+            y += 5;
+            doc.setFontSize(12);
+            doc.text(`Homeroom: ${room.roomName}`, 10, y);
+            y += 5;
+            doc.text(`Room Number: ${room.roomNumber}`, 10, y);
+            y += 5;
+            doc.text(`Room location: ${locName}`, 10, y);
+            y += 5;
+            doc.text(`Total Quantity: ${room.quantity}`, 10, y);
+            y += 5;
+            room.choices.forEach((choice) => {
+              doc.text(`${choice.name}: ${choice.quantity}`, 20, y);
+              y += 5;
+            });
+            y += 5;
+            doc.setFontSize(14);
+            doc.text("Students:", 10, y, { align: "Left" });
+            y += 5;
+
+            room.students.forEach((student) => {
+              doc.setFontSize(10);
+              doc.text(`Student: ${student.studentName}`, 10, y);
+              let x = 80;
+              student.choices.forEach((choice) => {
+                doc.text(`${choice.name}: ${choice.quantity}`, x, y);
+                // y += 5;
+                x += 50;
+              });
+              y += 5;
+            });
+          });
+
+          y += 10;
+        });
+        doc.save(
+          `SSS_PizzaDay_${printDate
+            .replace(/[^a-z0-9]/gi, "_")
+            .toLowerCase()}.pdf`
+        );
+      }
     </script>
 
     <!-- Include xlsx library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.16.9/xlsx.full.min.js"></script>
+    <!-- Include the jsPDF library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/1.3.2/jspdf.min.js"></script>
   </body>
 </html>
