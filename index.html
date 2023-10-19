@@ -51,7 +51,7 @@
             promptMessage += `${index + 1}. ${sheetName}\n`;
           });
 
-          const selectedSheetIndex = parseInt(prompt(promptMessage));
+          const selectedSheetIndex = parseInt(prompt(promptMessage, 2));
 
           if (
             isNaN(selectedSheetIndex) ||
