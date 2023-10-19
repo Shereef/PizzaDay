@@ -44,14 +44,25 @@
           }
 
           const sheetNames = workbook.SheetNames;
-          const selectedSheet = prompt(
-            "Select a sheet:\n" + sheetNames.join("\n")
-          );
 
-          if (!selectedSheet || !sheetNames.includes(selectedSheet)) {
-            alert("Invalid or no sheet selected.");
+          // Prompt the user to select a sheet by number
+          let promptMessage = "Select a sheet by number:\n";
+          sheetNames.forEach((sheetName, index) => {
+            promptMessage += `${index + 1}. ${sheetName}\n`;
+          });
+
+          const selectedSheetIndex = parseInt(prompt(promptMessage));
+
+          if (
+            isNaN(selectedSheetIndex) ||
+            selectedSheetIndex < 1 ||
+            selectedSheetIndex > sheetNames.length
+          ) {
+            alert("Invalid sheet number selected.");
             return;
           }
+
+          const selectedSheet = sheetNames[selectedSheetIndex - 1]; // Adjust for 0-based index
 
           const worksheet = workbook.Sheets[selectedSheet];
 
