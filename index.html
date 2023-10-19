@@ -7,6 +7,8 @@
   </head>
   <body>
     <h1>Pizza Day Formatter</h1>
+    <h3>This page doesn't upload info any where. it is safe to use.</h3>
+    <h3>However, it doesn't support password protected files.</h3>
     <h2>Select the school cash export:</h2>
     <h3>
       This needs to be the version with 2 sheets and has the Quantity Column
@@ -118,6 +120,12 @@ Room Number</textarea
             workbook = XLSX.read(arrayBuffer, { type: "array" });
           } catch (error) {
             if (error.message === "File is password-protected") {
+              console.error(
+                "Password Protected files are currently unsupported.",
+                error.message
+              );
+              alert("Password Protected files are currently unsupported.");
+              return;
               // Prompt the user for a password
               const password = prompt("Enter the password for the Excel file:");
               if (!password) {
