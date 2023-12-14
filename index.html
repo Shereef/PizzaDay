@@ -219,13 +219,30 @@ Room Number</textarea
           let filteredData = sheetData
             .slice(rowsToSkip)
             .filter((row) => {
-              return row.length && row.some((cell) => cell);
+              return (
+                row.length &&
+                row.some((cell) => {
+                  return cell;
+                })
+              );
             })
             .map((row) => {
-              return columnsToKeep.map((col) => row[header.indexOf(col)]);
+              return columnsToKeep.map((col) => {
+                const indexOfCol = header.indexOf(col);
+                const selectedCellValue = row[indexOfCol];
+                return selectedCellValue;
+              });
             })
             .filter((row) => {
-              return row.length && row.some((cell) => cell);
+              const rowLength = row.length;
+
+              if (rowLength === 0) {
+                return false;
+              }
+              const someCellHasValue = row.some((cell) => {
+                return cell;
+              });
+              return someCellHasValue;
             });
           let choice;
           for (const row of filteredData) {
