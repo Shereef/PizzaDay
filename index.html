@@ -229,7 +229,8 @@ Room Number</textarea
             .map((row) => {
               return columnsToKeep.map((col) => {
                 const indexOfCol = header.indexOf(col);
-                const selectedCellValue = row[indexOfCol];
+                const selectedCellValue =
+                  row[indexOfCol] ?? row[indexOfCol + 1];
                 return selectedCellValue;
               });
             })
