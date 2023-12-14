@@ -254,6 +254,14 @@ Room Number</textarea
               row[excelChoiceNameIndex] = choice;
             }
           }
+          // Set the quantity to 1 if it is empty
+          for (const row of filteredData) {
+            const rowQuantity = row[excelQuantityIndex];
+            if (!rowQuantity) {
+              row[excelQuantityIndex] = 1;
+            }
+          }
+          // Remove rows that have no data
           filteredData = filteredData.filter((row) => {
             return row.every((cell) => cell);
           });
