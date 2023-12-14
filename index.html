@@ -150,7 +150,7 @@ Room Number</textarea
               promptMessage += `${index + 1}. ${sheetName}\n`;
             });
 
-            const selectedSheetIndex = parseInt(prompt(promptMessage, 2));
+            const selectedSheetIndex = parseInt(prompt(promptMessage));
 
             if (
               isNaN(selectedSheetIndex) ||
