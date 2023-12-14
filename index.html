@@ -19,6 +19,25 @@
       />
       <label for="hideAdvancedOptions">Hide Advanced Options</label>
     </div>
+    <div>
+      <input
+        type="checkbox"
+        id="exportToPDF"
+        name="exportToPDF"
+        checked
+        onchange="hideAdvancedOptionsCheckedChange()"
+      />
+      <label for="exportToPDF">Export to PDF (Adobe Acrobat)</label>
+    </div>
+    <div>
+      <input
+        type="checkbox"
+        id="exportToExcel"
+        name="exportToExcel"
+        onchange="hideAdvancedOptionsCheckedChange()"
+      />
+      <label for="exportToExcel">Export to excel</label>
+    </div>
     <h3 class="advancedOption">
       This page doesn't upload info any where. it is safe to use.
     </h3>
@@ -96,10 +115,7 @@ Room Number</textarea
     <div class="advancedOption">
       <h3>Alternative CSV Content:</h3>
       <br />
-      <textarea
-        id="csvContent"
-        style="width: 333px; height: 293px;"
-      >
+      <textarea id="csvContent" style="width: 333px; height: 293px">
 Home Room Name,Location,Room Number
 01Ewing,Eaglewood,106
 01Johnson,Fort Sackville,4
@@ -137,7 +153,8 @@ PPHiltz,Fort Sackville,6
       const csvRoomNumberIndex = 2;
       let isAlternateColumnNames = false;
       function getCsvContent() {
-        if(!document.getElementById("hideAdvancedOptions").checked) return null;
+        if (!document.getElementById("hideAdvancedOptions").checked)
+          return null;
         const csvContent = document.getElementById("csvContent").value.trim();
         return csvContent;
       }
@@ -163,6 +180,11 @@ PPHiltz,Fort Sackville,6
         return csvColumns;
       }
       function process() {
+        if (!document.getElementById("exportToPDF").checked && !document.getElementById("exportToExcel").checked) {
+          console.error("Please select an export option.");
+          alert("Please select an export option.");
+          return;
+        }
         const columnsToKeep1 = getColumnsToKeep();
         if (!columnsToKeep1 || columnsToKeep1.length < 4) {
           console.error("The excel Columns must be more than 3!");
@@ -474,8 +496,10 @@ PPHiltz,Fort Sackville,6
             });
 
             console.log(locations);
-            exportToPDF(locations);
-            exportToExcel(locations);
+            if (document.getElementById("exportToPDF").checked)
+              exportToPDF(locations);
+            if (document.getElementById("exportToExcel").checked)
+              exportToExcel(locations);
           };
           if (csvFile) {
             csvReader.readAsText(csvFile);
@@ -819,14 +843,20 @@ PPHiltz,Fort Sackville,6
         a.click();
       }
       function hideAdvancedOptionsCheckedChange() {
-        const hideAdvancedOptions = document.getElementById("hideAdvancedOptions").checked;
+        const hideAdvancedOptions = document.getElementById(
+          "hideAdvancedOptions"
+        ).checked;
         const optionals = document.getElementsByClassName("advancedOption");
         for (const advancedOption of optionals) {
           advancedOption.style.display = hideAdvancedOptions ? "none" : "block";
         }
-        const optionals2 = document.getElementsByClassName("advancedOptionInlineBlock");
+        const optionals2 = document.getElementsByClassName(
+          "advancedOptionInlineBlock"
+        );
         for (const advancedOption of optionals2) {
-          advancedOption.style.display = hideAdvancedOptions ? "none" : "inline-block";
+          advancedOption.style.display = hideAdvancedOptions
+            ? "none"
+            : "inline-block";
         }
       }
       hideAdvancedOptionsCheckedChange();
