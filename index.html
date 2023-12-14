@@ -9,27 +9,45 @@
     <h1>
       Pizza Day Formatter <a href="help.html" style="font-size: medium">Help</a>
     </h1>
-    <h3>This page doesn't upload info any where. it is safe to use.</h3>
-    <h3>However, it doesn't support password protected files.</h3>
+    <div>
+      <input
+        type="checkbox"
+        id="hideAdvancedOptions"
+        name="hideAdvancedOptions"
+        checked
+        onchange="hideAdvancedOptionsCheckedChange()"
+      />
+      <label for="hideAdvancedOptions">Hide Advanced Options</label>
+    </div>
+    <h3 class="advancedOption">
+      This page doesn't upload info any where. it is safe to use.
+    </h3>
+    <h3 class="advancedOption">
+      However, it doesn't support password protected files.
+    </h3>
     <h2>Select the school cash export:</h2>
-    <h3>
+    <h3 class="advancedOption">
       This needs to be the version with 2 sheets and has the Quantity Column
     </h3>
     <br />
     <input type="file" id="excelFileInput" accept=".xlsx" />
     <span>I.E. Pizza Day_Raw Data_18Oct2023.xlsx</span>
     <br />
-    <h2>List of Homeroom & Room Numbers.csv:</h2>
-    <h3>This usually has 3 columns room name, room number and location</h3>
-    <br />
-    <input type="file" id="csvFileInput" accept=".csv" />
-    <span>I.E. 2023-2024_List of Homeroom & Room Numbers.csv</span>
-    <br />
+    <h2 class="advancedOption">List of Homeroom & Room Numbers.csv:</h2>
+    <h3 class="advancedOption">
+      This usually has 3 columns room name, room number and location
+    </h3>
+    <br class="advancedOption" />
+    <input class="advancedOption" type="file" id="csvFileInput" accept=".csv" />
+    <span class="advancedOption"
+      >I.E. 2023-2024_List of Homeroom & Room Numbers.csv</span
+    >
+    <br class="advancedOption" />
     <br />
     <button onclick="process()">Process</button>
     <br />
     <br />
-    <div style="display: inline-block">
+    <div class="advancedOptionInlineBlock" style="display: inline-block">
       <h3>Excel Columns:</h3>
       <br />
       <textarea id="excelColumns" style="height: 100px">
@@ -39,7 +57,7 @@ Quantity
 Student Name</textarea
       >
     </div>
-    <div style="display: none">
+    <div class="advancedOptionInlineBlock">
       <h3>Excel Alternate Columns:</h3>
       This just helps with other versions of the excel file<br />
       <textarea id="excelAlternateColumns" style="height: 100px">
@@ -49,8 +67,8 @@ Quantity
 Student Name</textarea
       >
     </div>
-    <br />
-    <span
+    <br class="advancedOption" />
+    <span class="advancedOption"
       >Choice name must be first<br />Home room must be second<br />Quantity
       must be third<br />Student Name must be fourth<br />
       This is used to set the column names if they ever change<br />You
@@ -58,29 +76,29 @@ Student Name</textarea
     >
     <br />
 
+    <br class="advancedOption" />
+    <br class="advancedOption" />
+    <h3 class="advancedOption">CSV Columns:</h3>
     <br />
-    <br />
-    <h3>CSV Columns:</h3>
-    <br />
-    <textarea id="csvColumns" style="height: 100px">
+    <textarea class="advancedOption" id="csvColumns" style="height: 100px">
 Home Room Name
 Location
 Room Number</textarea
     >
     <br />
-    <span
+    <span class="advancedOption"
       >Home room name must be the first column<br />Location must be the second
       column<br />Room Number must be the third column <br />This is used to set
       the column names if they ever change<br />You shouldn't need to change
       this</span
     >
     <br />
-    <div style="display: none">
+    <div class="advancedOption">
       <h3>Alternative CSV Content:</h3>
       <br />
       <textarea
         id="csvContent"
-        style="width: 333px; height: 293px; display: block"
+        style="width: 333px; height: 293px;"
       >
 Home Room Name,Location,Room Number
 01Ewing,Eaglewood,106
@@ -119,6 +137,7 @@ PPHiltz,Fort Sackville,6
       const csvRoomNumberIndex = 2;
       let isAlternateColumnNames = false;
       function getCsvContent() {
+        if(!document.getElementById("hideAdvancedOptions").checked) return null;
         const csvContent = document.getElementById("csvContent").value.trim();
         return csvContent;
       }
@@ -799,6 +818,18 @@ PPHiltz,Fort Sackville,6
           .toLowerCase()}.xlsx`;
         a.click();
       }
+      function hideAdvancedOptionsCheckedChange() {
+        const hideAdvancedOptions = document.getElementById("hideAdvancedOptions").checked;
+        const optionals = document.getElementsByClassName("advancedOption");
+        for (const advancedOption of optionals) {
+          advancedOption.style.display = hideAdvancedOptions ? "none" : "block";
+        }
+        const optionals2 = document.getElementsByClassName("advancedOptionInlineBlock");
+        for (const advancedOption of optionals2) {
+          advancedOption.style.display = hideAdvancedOptions ? "none" : "inline-block";
+        }
+      }
+      hideAdvancedOptionsCheckedChange();
     </script>
 
     <!-- Include xlsx library -->
