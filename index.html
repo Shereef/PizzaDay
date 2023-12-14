@@ -128,28 +128,6 @@ Room Number</textarea
               );
               alert("Password Protected files are currently unsupported.");
               return;
-              // Prompt the user for a password
-              const password = prompt("Enter the password for the Excel file:");
-              if (!password) {
-                console.error(
-                  "Password is required to open this Excel file.",
-                  error.message
-                );
-                alert("Password is required to open this Excel file.");
-                return;
-              }
-
-              // Try reading the workbook with the provided password
-              try {
-                workbook = XLSX.read(arrayBuffer, { type: "array", password });
-              } catch (error) {
-                console.error(
-                  "Incorrect password. Please try again.",
-                  error.message
-                );
-                alert("Incorrect password. Please try again.");
-                return;
-              }
             } else {
               console.error(
                 "An error occurred whi1e processing the file:",
