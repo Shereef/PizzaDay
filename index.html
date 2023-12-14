@@ -180,7 +180,10 @@ PPHiltz,Fort Sackville,6
         return csvColumns;
       }
       function process() {
-        if (!document.getElementById("exportToPDF").checked && !document.getElementById("exportToExcel").checked) {
+        if (
+          !document.getElementById("exportToPDF").checked &&
+          !document.getElementById("exportToExcel").checked
+        ) {
           console.error("Please select an export option.");
           alert("Please select an export option.");
           return;
@@ -624,8 +627,24 @@ PPHiltz,Fort Sackville,6
 
         return totalRooms;
       }
+
+      function getFormattedDate() {
+        let date = new Date();
+        let year = date.getFullYear();
+        let month = ("0" + (date.getMonth() + 1)).slice(-2);
+        let day = ("0" + date.getDate()).slice(-2);
+        let hours = ("0" + date.getHours()).slice(-2);
+        let minutes = ("0" + date.getMinutes()).slice(-2);
+        let seconds = ("0" + date.getSeconds()).slice(-2);
+        let amPm = hours >= 12 ? "PM" : "AM";
+        hours = hours % 12;
+        hours = hours ? ("0" + hours).slice(-2) : 12; // the hour '0' should be '12'
+        let formattedDate = `${year}/${month}/${day} ${hours}:${minutes}:${seconds} ${amPm}`;
+        return formattedDate;
+      }
+
       function exportToPDF(locations) {
-        const printDate = new Date().toISOString();
+        const printDate = getFormattedDate();
         let y = 10;
         const doc = new jsPDF();
         const totalNumberOfPages = 1 + getTotalNumberOfRooms(locations);
