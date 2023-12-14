@@ -29,6 +29,7 @@
     <button onclick="process()">Process</button>
     <br />
     <br />
+    <div style="display: inline-block;">
     <h3>Excel Columns:</h3>
     <br />
     <textarea id="excelColumns" style="height: 100px">
@@ -36,7 +37,16 @@ Choice Name
 Homeroom
 Quantity
 Student Name</textarea
-    >
+    ></div>
+    <div style="display: inline-block;">
+    <h3>Excel Alternate Columns:</h3>
+    This just helps with other versions of the excel file<br />
+    <textarea id="excelAlternateColumns" style="height: 100px">
+Options
+Homeroom
+Quantity
+Student Name</textarea
+    ></div>
     <br />
     <span
       >Choice name must be first<br />Home room must be second<br />Quantity
@@ -76,9 +86,14 @@ Room Number</textarea
       const csvHomeRoomIndex = 0;
       const csvLocationIndex = 1;
       const csvRoomNumberIndex = 2;
-      function getColumnsToKeep() {
+      let isAlternateColumnNames = false;
+      function getColumnsToKeep(alternate = false) {
         const columnsToKeep = document
-          .getElementById("excelColumns")
+          .getElementById(
+            alternate || isAlternateColumnNames
+              ? "excelColumns"
+              : "excelAlternateColumns"
+          )
           .value.trim()
           .split("\n")
           .filter((element) => element?.trim().length);
@@ -94,14 +109,19 @@ Room Number</textarea
         return csvColumns;
       }
       function process() {
-        const columnsToKeep = getColumnsToKeep();
-        if (!columnsToKeep || columnsToKeep.length < 4) {
+        const columnsToKeep1 = getColumnsToKeep();
+        if (!columnsToKeep1 || columnsToKeep1.length < 4) {
           console.error("The excel Columns must be more than 3!");
           alert("The excel Columns must be more than 3!");
           return;
         }
-        const columnToFind = columnsToKeep[excelChoiceNameIndex];
 
+        const columnsToKeep2 = getColumnsToKeep(true);
+        if (!columnsToKeep2 || columnsToKeep2.length < 4) {
+          console.error("The excel Columns must be more than 3!");
+          alert("The excel Columns must be more than 3!");
+          return;
+        }
         const excelFileInput = document.getElementById("excelFileInput");
         const excelFile = excelFileInput.files[0];
         const csvFileInput = document.getElementById("csvFileInput");
@@ -173,7 +193,26 @@ Room Number</textarea
             header: 1,
             range: 0, // Start from the beginning of the sheet
           });
+          const columnToFind1 = columnsToKeep1[excelChoiceNameIndex];
+          const columnToFind2 = columnsToKeep2[excelChoiceNameIndex];
 
+          const rowIndex1 = sheetData.findIndex((row) =>
+            row.includes(columnToFind1)
+          );
+          const rowIndex2 = sheetData.findIndex((row) =>
+            row.includes(columnToFind2)
+          );
+          if (rowIndex1 === -1 && rowIndex2 === -1) {
+            console.error("The specified column value was not found.");
+            alert("The specified column value was not found.");
+            return;
+          }
+          if (rowIndex1 === -1) {
+            isAlternateColumnNames = true;
+          }
+
+          const columnsToKeep = getColumnsToKeep();
+          const columnToFind = columnsToKeep[excelChoiceNameIndex];
           // Find the index of the row with the specified value in the desired column
           const rowIndex = sheetData.findIndex((row) =>
             row.includes(columnToFind)
