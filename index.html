@@ -29,24 +29,26 @@
     <button onclick="process()">Process</button>
     <br />
     <br />
-    <div style="display: inline-block;">
-    <h3>Excel Columns:</h3>
-    <br />
-    <textarea id="excelColumns" style="height: 100px">
+    <div style="display: inline-block">
+      <h3>Excel Columns:</h3>
+      <br />
+      <textarea id="excelColumns" style="height: 100px">
 Choice Name
 Homeroom
 Quantity
 Student Name</textarea
-    ></div>
+      >
+    </div>
     <div style="display: none">
-    <h3>Excel Alternate Columns:</h3>
-    This just helps with other versions of the excel file<br />
-    <textarea id="excelAlternateColumns" style="height: 100px">
+      <h3>Excel Alternate Columns:</h3>
+      This just helps with other versions of the excel file<br />
+      <textarea id="excelAlternateColumns" style="height: 100px">
 Options
 Homeroom
 Quantity
 Student Name</textarea
-    ></div>
+      >
+    </div>
     <br />
     <span
       >Choice name must be first<br />Home room must be second<br />Quantity
@@ -73,6 +75,35 @@ Room Number</textarea
       this</span
     >
     <br />
+    <div style="display: none">
+      <h3>Alternative CSV Content:</h3>
+      <br />
+      <textarea
+        id="csvContent"
+        style="width: 333px; height: 293px; display: block"
+      >
+Home Room Name,Location,Room Number
+01Ewing,Eaglewood,106
+01Johnson,Fort Sackville,4
+0Appleton,Fort Sackville,1
+1Fraser,Fort Sackville,3
+1Murray,Fort Sackville,5
+2Abboud,Eaglewood,102
+2Isenor/ Stach,Eaglewood,101
+2Shields (MacFarlane),Eaglewood,105
+34Bramwell/ Graaham,Eaglewood,208
+3BennChais,Eaglewood,104
+3Richard (Radelich/Oakley),Eaglewood,204
+45Caldwell,Eaglewood,203
+45Kelly,Eaglewood,202
+45Sutherland,Eaglewood,207
+5Boudreau,Eaglewood,200
+PPHiltz,Fort Sackville,6
+3KhaznaDar,Eaglewood,999
+</textarea
+      >
+    </div>
+    <br />
 
     <br />
     <br />
@@ -87,6 +118,10 @@ Room Number</textarea
       const csvLocationIndex = 1;
       const csvRoomNumberIndex = 2;
       let isAlternateColumnNames = false;
+      function getCsvContent() {
+        const csvContent = document.getElementById("csvContent").value.trim();
+        return csvContent;
+      }
       function getColumnsToKeep(alternate = false) {
         const columnsToKeep = document
           .getElementById(
@@ -126,9 +161,14 @@ Room Number</textarea
         const excelFile = excelFileInput.files[0];
         const csvFileInput = document.getElementById("csvFileInput");
         const csvFile = csvFileInput.files[0];
-        if (!excelFile || !csvFile) {
-          console.error("Please select both Excel and CSV files.");
-          alert("Please select both Excel and CSV files.");
+        if (!excelFile) {
+          console.error("Please select an Excel file.");
+          alert("Please select an Excel file.");
+          return;
+        }
+        if (!csvFile && !getCsvContent()) {
+          console.error("Please select a CSV file.");
+          alert("Please select a CSV file.");
           return;
         }
 
@@ -418,7 +458,11 @@ Room Number</textarea
             exportToPDF(locations);
             exportToExcel(locations);
           };
-          csvReader.readAsText(csvFile);
+          if (csvFile) {
+            csvReader.readAsText(csvFile);
+          } else {
+            csvReader.readAsText(new Blob([getCsvContent()]));
+          }
         };
 
         reader.readAsArrayBuffer(excelFile);
