@@ -254,19 +254,25 @@ PPHiltz,Fort Sackville,6
               promptMessage += `${index + 1}. ${sheetName}\n`;
             });
 
-            const selectedSheetIndex = parseInt(prompt(promptMessage));
+            selectedSheet = sheetNames.find((sheetName) => {
+              return sheetName.toLowerCase().indexOf("Summary") === -1;
+            });
 
-            if (
-              isNaN(selectedSheetIndex) ||
-              selectedSheetIndex < 1 ||
-              selectedSheetIndex > sheetNames.length
-            ) {
-              console.error("Invalid sheet number selected.");
-              alert("Invalid sheet number selected.");
-              return;
+            if (!selectedSheet) {
+              const selectedSheetIndex = parseInt(prompt(promptMessage));
+
+              if (
+                isNaN(selectedSheetIndex) ||
+                selectedSheetIndex < 1 ||
+                selectedSheetIndex > sheetNames.length
+              ) {
+                console.error("Invalid sheet number selected.");
+                alert("Invalid sheet number selected.");
+                return;
+              }
+
+              selectedSheet = sheetNames[selectedSheetIndex - 1]; // Adjust for 0-based index
             }
-
-            selectedSheet = sheetNames[selectedSheetIndex - 1]; // Adjust for 0-based index
           } else {
             selectedSheet = sheetNames[0];
           }
